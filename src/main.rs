@@ -1,24 +1,32 @@
-fn print(s:&String){
+use std::fs;
+use std::env;
 
+fn read_instructions_file_from_args()->Vec<String>{
+    let args: Vec<String> = env::args().collect();
 
-    println!("{}",s);
+    if args.len()!=2{
+        println!("يجب تمرير ملف واحد فقط.");
+        std::process::exit(1);
+    }
+
+    let file_path: &String=&args[1];
+
+    let contents=fs::read_to_string(file_path)
+        .expect("لا يمكن قراءة الملف.");
+
+    let instructions=contents.split_whitespace()
+        .map(String::from).collect();
+
+    return instructions;
+}
+
+fn assemble_instructions(instructions:Vec<String>):Vec<u8>{
     
 }
 
-fn change(s:&mut String){
-
-    *s=String::from("value");
-
-}
-
 fn main() {
-    let mut s: String=String::from("this is string");
-    let mut s1: String=s;
+    let instructions_str=read_instructions_file_from_args();
 
-    change(&mut s1);
+    let instructions=assemble_instructions(instructions_str);
 
-    println!("{}",s1);
-
-
-    println!("Hello, world!");
 }
