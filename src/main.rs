@@ -11,22 +11,25 @@ fn read_instructions_file_from_args()->Vec<String>{
 
     let file_path: &String=&args[1];
 
-    let contents=fs::read_to_string(file_path)
+    let content=fs::read_to_string(file_path)
         .expect("لا يمكن قراءة الملف.");
 
-    let instructions=contents.split_whitespace()
+    let lines=content.split("\n")
         .map(String::from).collect();
 
-    return instructions;
+    return lines;
 }
 
-fn assemble_instructions(instructions:Vec<String>):Vec<u8>{
+fn assemble_instructions(lines:Vec<String>)->Vec<u8>{
+    for l in lines{
+        
+    }
     
 }
 
 fn main() {
-    let instructions_str=read_instructions_file_from_args();
+    let lines=read_instructions_file_from_args();
 
-    let instructions=assemble_instructions(instructions_str);
+    let instructions=assemble_instructions(lines);
 
 }
