@@ -1,3 +1,5 @@
+use std::{str::FromStr, fmt::{Debug, Display}};
+
 use crate::op_code::*;
 
 pub struct Assembler{
@@ -21,6 +23,7 @@ impl Assembler{
         while self.i<self.content.len() {
 
             let c=self.content[self.i];
+            self.i+=1;
 
             if !c.is_ascii_whitespace(){
                 self.current_instruction+=&c.to_string();
@@ -30,7 +33,7 @@ impl Assembler{
                 (
                     c.is_ascii_whitespace()
                     ||
-                    self.i==self.content.len()-1
+                    self.i==self.content.len()
                 )
                 &&
                 !self.current_instruction.is_empty()
@@ -40,14 +43,13 @@ impl Assembler{
                 self.current_instruction=String::from("");
             }
 
-            self.i+=1
 
         }
         
         return instructions;
     }
 
-    fn map_current_instruction(&self)->Vec<u8>{
+    fn map_current_instruction(&mut self)->Vec<u8>{
         let mut instructions:Vec<u8>=vec![];
     
         match self.current_instruction.as_str() {
@@ -62,7 +64,15 @@ impl Assembler{
                 instructions.push(op_code::PRINTLN)
             }
             op_code_name::PUSH_I32=>{
-                instructions.push(op_code::PUSH_I32)
+                let mut int=self.get_next_int_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
+                let mut int2:[u8;4]=[0;4];
+                for i in 0..4{
+                    int2[i]=int[i];
+                }
+                let int3=i32::from_be_bytes(int2);
+                println!("{}",int3);
+                instructions.push(op_code::PUSH_I32);
+                instructions.append(&mut int);
             }
             op_code_name::PUSH_U32=>{
                 instructions.push(op_code::PUSH_U32)
@@ -364,5 +374,39 @@ impl Assembler{
         }
     
         return instructions;
+    }
+
+    fn get_next_int_lit<INT:FromStr+Ord+Display>(&mut self,min:INT,max:INT)->INT
+        where INT::Err:Debug{
+        
+        let mut int_lit;
+
+        if self.content[self.i]=='-'{
+            int_lit=String::from("-");
+            self.i+=1
+        }
+        else{
+            int_lit=String::from("")
+        }
+
+        while self.i<self.content.len(){
+            let c=self.content[self.i];
+            self.i+=1;
+            if c.is_ascii_whitespace(){
+                break
+            }
+            if !c.is_ascii_digit(){
+                panic!("يتوقع رقم، وُجِدَ \'{}\'", c)
+            }
+            int_lit+=&c.to_string();
+        }
+
+        let int=int_lit.parse::<INT>();
+
+        match int {
+            Ok(val) => return val,
+            Err(msg) =>
+                panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها من \'{}\' إلى \'{}\'.",int_lit,min,max)
+        }
     }
 }
