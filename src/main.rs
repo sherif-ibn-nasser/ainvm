@@ -1,3 +1,6 @@
+pub mod assembler;
+pub mod op_code;
+
 use std::fs;
 use std::env;
 
@@ -20,16 +23,9 @@ fn read_instructions_file_from_args()->Vec<String>{
     return lines;
 }
 
-fn assemble_instructions(lines:Vec<String>)->Vec<u8>{
-    for l in lines{
-        
-    }
-    
-}
-
 fn main() {
     let lines=read_instructions_file_from_args();
 
-    let instructions=assemble_instructions(lines);
+    let instructions=assembler::assemble_instructions(lines);
 
 }

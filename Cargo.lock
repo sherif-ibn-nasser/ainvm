@@ -5,3 +5,12 @@ version = 3
 [[package]]
 name = "ainvm"
 version = "0.1.0"
+dependencies = [
+ "iota",
+]
+
+[[package]]
+name = "iota"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "680dd6d5502d25bf20a63b093da51b1b2663099dcd7b0fd450cc9e88c9465d4f"
