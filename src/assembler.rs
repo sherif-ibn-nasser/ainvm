@@ -65,26 +65,26 @@ impl Assembler{
             }
             op_code_name::PUSH_I32=>{
                 let mut int=self.get_next_int_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
-                let mut int2:[u8;4]=[0;4];
-                for i in 0..4{
-                    int2[i]=int[i];
-                }
-                let int3=i32::from_be_bytes(int2);
-                println!("{}",int3);
                 instructions.push(op_code::PUSH_I32);
                 instructions.append(&mut int);
             }
             op_code_name::PUSH_U32=>{
-                instructions.push(op_code::PUSH_U32)
+                let mut uint=self.get_next_int_lit::<u32>(u32::MIN,u32::MAX).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_U32);
+                instructions.append(&mut uint);
             }
             op_code_name::PUSH_F32=>{
                 instructions.push(op_code::PUSH_F32)
             }
             op_code_name::PUSH_I64=>{
-                instructions.push(op_code::PUSH_I64)
+                let mut int=self.get_next_int_lit::<i64>(i64::MIN,i64::MAX).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_I64);
+                instructions.append(&mut int);
             }
             op_code_name::PUSH_U64=>{
-                instructions.push(op_code::PUSH_U64)
+                let mut uint=self.get_next_int_lit::<u64>(u64::MIN,u64::MAX).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_U64);
+                instructions.append(&mut uint);
             }
             op_code_name::PUSH_F64=>{
                 instructions.push(op_code::PUSH_F64)
