@@ -319,25 +319,28 @@ fn map_instruction(instruction:&str)->Vec<u8>{
     return instructions;
 }
 
-pub fn assemble_instructions(lines:Vec<String>)->Vec<u8>{
-
+pub fn assemble_instructions(content:String)->Vec<u8>{
+    let content=content+"\n"; // Add this to indicate the eof, and not repeat checking for non-empty instruction
     let mut instructions:Vec<u8>=vec![];
 
     let mut current_instruction=String::from("");
 
-    for line in lines{
+    for (i,c) in content.char_indices(){
 
-        for c in line.chars(){
-            if c!=' '{ 
-                current_instruction+=&c.to_string();
-                continue
-            }
-
-            let mut new_instructions=map_instruction(&current_instruction);
-            instructions.append(&mut new_instructions);
-            current_instruction=String::from("");
-
+        if c!=' ' && c!='\n'{
+            current_instruction+=&c.to_string();
+            println!("{}",current_instruction);
+            continue
         }
+
+        if current_instruction.is_empty(){
+            continue
+        }
+
+        let mut new_instructions=map_instruction(&current_instruction);
+        instructions.append(&mut new_instructions);
+        current_instruction=String::from("");
     }
+    
     return instructions;
 }
