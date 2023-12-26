@@ -94,13 +94,29 @@ impl Assembler{
                 instructions.append(&mut float);
             }
             op_code_name::PUSH_CHAR=>{
-                let mut c=self.get_next_char_lit('\'').as_bytes().to_vec();
+                let mut c=self.get_next_char_lit('\'')
+                    .encode_utf16()
+                    .flat_map(|b16|b16.to_be_bytes())
+                    .collect();
                 instructions.push(op_code::PUSH_CHAR);
                 instructions.append(&mut c);
+                /*
+                 * let mut tbb:Vec<u16>=tb.chunks(2)
+                        .map(
+                            |b|
+                            ((b[0] as u16) << 8) | b[1] as u16
+                        )
+                        .collect();
+                 */
             }
             op_code_name::PUSH_STR=>{
-                let mut str=self.get_next_char_lit('\"').as_bytes().to_vec();
+                let mut str:Vec<_>=self.get_next_char_lit('\"')
+                    .encode_utf16()
+                    .flat_map(|b16|b16.to_be_bytes())
+                    .collect();
+                let mut size=(str.len()/2).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_STR);
+                instructions.append(&mut size);
                 instructions.append(&mut str);
             }
             op_code_name::PUSH_TRUE=>{
