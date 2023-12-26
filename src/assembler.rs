@@ -64,12 +64,12 @@ impl Assembler{
                 instructions.push(op_code::PRINTLN)
             }
             op_code_name::PUSH_I32=>{
-                let mut int=self.get_next_int_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
+                let mut int=self.get_next_num_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_I32);
                 instructions.append(&mut int);
             }
             op_code_name::PUSH_U32=>{
-                let mut uint=self.get_next_int_lit::<u32>(u32::MIN,u32::MAX).to_be_bytes().to_vec();
+                let mut uint=self.get_next_num_lit::<u32>(u32::MIN,u32::MAX).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_U32);
                 instructions.append(&mut uint);
             }
@@ -77,12 +77,12 @@ impl Assembler{
                 instructions.push(op_code::PUSH_F32)
             }
             op_code_name::PUSH_I64=>{
-                let mut int=self.get_next_int_lit::<i64>(i64::MIN,i64::MAX).to_be_bytes().to_vec();
+                let mut int=self.get_next_num_lit::<i64>(i64::MIN,i64::MAX).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_I64);
                 instructions.append(&mut int);
             }
             op_code_name::PUSH_U64=>{
-                let mut uint=self.get_next_int_lit::<u64>(u64::MIN,u64::MAX).to_be_bytes().to_vec();
+                let mut uint=self.get_next_num_lit::<u64>(u64::MIN,u64::MAX).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_U64);
                 instructions.append(&mut uint);
             }
@@ -376,37 +376,33 @@ impl Assembler{
         return instructions;
     }
 
-    fn get_next_int_lit<INT:FromStr+Ord+Display>(&mut self,min:INT,max:INT)->INT
-        where INT::Err:Debug{
+    fn get_next_num_lit<NUM:FromStr+Ord+Display>(&mut self,min:NUM,max:NUM)->NUM
+        where NUM::Err:Debug{
         
-        let mut int_lit;
-
-        if self.content[self.i]=='-'{
-            int_lit=String::from("-");
-            self.i+=1
-        }
-        else{
-            int_lit=String::from("")
-        }
+        let mut num_lit=String::from("");
 
         while self.i<self.content.len(){
             let c=self.content[self.i];
             self.i+=1;
-            if c.is_ascii_whitespace(){
-                break
+
+            if !c.is_ascii_whitespace(){
+                num_lit+=&c.to_string();
+                continue
             }
-            if !c.is_ascii_digit(){
-                panic!("يتوقع رقم، وُجِدَ \'{}\'", c)
+            else if num_lit.is_empty(){
+                panic!("يُتوقع عدد.")
             }
-            int_lit+=&c.to_string();
+            break
+
         }
 
-        let int=int_lit.parse::<INT>();
+        let num=num_lit.parse::<NUM>();
 
-        match int {
+        match num {
             Ok(val) => return val,
             Err(msg) =>
-                panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها من \'{}\' إلى \'{}\'.",int_lit,min,max)
+                panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها من \'{}\' إلى \'{}\'.",num_lit,min,max)
         }
     }
+
 }
