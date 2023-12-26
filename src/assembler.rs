@@ -74,7 +74,9 @@ impl Assembler{
                 instructions.append(&mut uint);
             }
             op_code_name::PUSH_F32=>{
-                instructions.push(op_code::PUSH_F32)
+                let mut float=self.get_next_num_lit::<f32>(f32::MIN,f32::MAX).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_F32);
+                instructions.append(&mut float);
             }
             op_code_name::PUSH_I64=>{
                 let mut int=self.get_next_num_lit::<i64>(i64::MIN,i64::MAX).to_be_bytes().to_vec();
@@ -87,7 +89,9 @@ impl Assembler{
                 instructions.append(&mut uint);
             }
             op_code_name::PUSH_F64=>{
-                instructions.push(op_code::PUSH_F64)
+                let mut float=self.get_next_num_lit::<f64>(f64::MIN,f64::MAX).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_F64);
+                instructions.append(&mut float);
             }
             op_code_name::PUSH_CHAR=>{
                 instructions.push(op_code::PUSH_CHAR)
@@ -376,7 +380,7 @@ impl Assembler{
         return instructions;
     }
 
-    fn get_next_num_lit<NUM:FromStr+Ord+Display>(&mut self,min:NUM,max:NUM)->NUM
+    fn get_next_num_lit<NUM:FromStr+PartialOrd+Display>(&mut self,min:NUM,max:NUM)->NUM
         where NUM::Err:Debug{
         
         let mut num_lit=String::from("");
