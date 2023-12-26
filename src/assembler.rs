@@ -94,7 +94,14 @@ impl Assembler{
                 instructions.append(&mut float);
             }
             op_code_name::PUSH_CHAR=>{
-                instructions.push(op_code::PUSH_CHAR)
+                let mut c=self.get_next_char_lit('\'').as_bytes().to_vec();
+                instructions.push(op_code::PUSH_CHAR);
+                instructions.append(&mut c);
+            }
+            op_code_name::PUSH_STR=>{
+                let mut str=self.get_next_char_lit('\"').as_bytes().to_vec();
+                instructions.push(op_code::PUSH_STR);
+                instructions.append(&mut str);
             }
             op_code_name::PUSH_TRUE=>{
                 instructions.push(op_code::PUSH_TRUE)
@@ -386,8 +393,8 @@ impl Assembler{
         let mut num_lit=String::from("");
 
         while self.i<self.content.len(){
-            let c=self.content[self.i];
-            self.i+=1;
+            let c=self.current_char();
+            self.next();
 
             if !c.is_ascii_whitespace(){
                 num_lit+=&c.to_string();
@@ -406,6 +413,108 @@ impl Assembler{
             Ok(val) => return val,
             Err(msg) =>
                 panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها من \'{}\' إلى \'{}\'.",num_lit,min,max)
+        }
+    }
+
+    fn get_next_char_lit(&mut self,quote:char)->String{
+
+        let mut char_lit=String::from("");
+
+        let quote_ch=self.current_char();
+        self.next();
+
+        let is_char=quote_ch=='\'';
+        let is_str=quote_ch=='\"';
+
+        if !is_char && quote=='\''{
+            panic!("يُتوقع حرف.")
+        }
+        if !is_str && quote=='\"'{
+            panic!("يُتوقع نص.")
+        }
+
+        while self.i<self.content.len(){
+            let current_char=self.current_char();
+            self.next();
+
+            /*If it's quote (" or ') return the token*/
+            if current_char==quote{
+                if is_char&&char_lit.chars().count()!=1{
+                    panic!("\'{}\' يجب أن يكون حرفاً واحداً فقط.",char_lit)
+                }
+                return char_lit;
+            }
+
+            /*Append if it is not a special character*/
+            if current_char!='\\'{
+                // TODO: checkIsKufrOrUnsupportedCharacter(current_char);
+                char_lit+=&current_char.to_string();
+                continue;
+            }
+
+            let ctrl_char=self.current_char();
+            self.next();
+
+            /*Unicode characters parsing*/
+            if ctrl_char=='ي'{
+                let c=self.get_next_unicode_char_from_code_point();
+                // TODO: checkIsKufrOrUnsupportedCharacter(c);
+                char_lit+=&c.to_string();
+                continue;
+            }
+
+            let es=self.get_next_escape_sequence_form_char(ctrl_char);
+            char_lit+=&es.to_string();
+        }
+
+
+        let ch=char_lit.parse::<char>();
+
+        match ch {
+            Ok(_) => return char_lit,
+            Err(_) =>
+                panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها.",char_lit)
+        }
+    }
+
+    fn current_char(&self)->char{
+        self.content[self.i]
+    }
+
+    fn next(&mut self){
+        self.i+=1
+    }
+
+    fn get_next_unicode_char_from_code_point(&mut self)->char{
+        let mut code_point=String::from("");
+        for _ in 0..4{
+            let c=self.current_char();
+            self.next();
+            if !c.is_ascii_hexdigit(){
+                panic!("يُتوقع رقم سداسي عشر.")
+            }
+            code_point+=&c.to_string();
+        }
+        let c=char::from_u32(
+            u32::from_str_radix(&code_point,16).unwrap()
+        ).unwrap();
+        return c;
+    }
+
+    fn get_next_escape_sequence_form_char(&self, c:char)->char{
+        match c {
+            'خ'=>return '\x08', // مسافة للخلف
+            'ف'=>return '\t', // مسافة أفقية
+            'س'=>return '\n', // سطر جديد
+            'ر'=>return '\x0b', // مسافة رأسية
+            'ص'=>return '\x0c', // الصفحة التالية
+            'ج'=>return '\r', // إرجاع المؤشر إلى بداية السطر، وبدء الكتابة منه
+            '\\'=>return '\\',
+            '\''=>return '\'',
+            '\"'=>return '\"',
+            _=>{
+                panic!(" \'\\{}\' حرف خاص غير صالح.",c)
+            }
         }
     }
 

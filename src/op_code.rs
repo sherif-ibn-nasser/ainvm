@@ -14,6 +14,7 @@ pub mod op_code_name{
     pub const PUSH_U64:&str="أدرج_م64";
     pub const PUSH_F64:&str="أدرج_ع64";
     pub const PUSH_CHAR:&str="أدرج_حرف";
+    pub const PUSH_STR:&str="أدرج_نص";
     pub const PUSH_TRUE:&str="أدرج_صواب";
     pub const PUSH_FALSE:&str="أدرج_خطأ";
 
@@ -142,6 +143,7 @@ pub mod op_code{
                 , PUSH_U64
                 , PUSH_F64
                 , PUSH_CHAR
+                , PUSH_STR
                 , PUSH_TRUE
                 , PUSH_FALSE
                 , POP
