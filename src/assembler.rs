@@ -100,6 +100,16 @@ impl Assembler{
                     .collect();
                 instructions.push(op_code::PUSH_CHAR);
                 instructions.append(&mut c);
+            }
+            op_code_name::PUSH_STR=>{
+                let mut str:Vec<_>=self.get_next_char_lit('\"')
+                    .encode_utf16()
+                    .flat_map(|b16|b16.to_be_bytes())
+                    .collect();
+                let mut size=((str.len()/2) as u64).to_be_bytes().to_vec();
+                instructions.push(op_code::PUSH_STR);
+                instructions.append(&mut size);
+                instructions.append(&mut str);
                 /*
                  * let mut tbb:Vec<u16>=tb.chunks(2)
                         .map(
@@ -108,16 +118,6 @@ impl Assembler{
                         )
                         .collect();
                  */
-            }
-            op_code_name::PUSH_STR=>{
-                let mut str:Vec<_>=self.get_next_char_lit('\"')
-                    .encode_utf16()
-                    .flat_map(|b16|b16.to_be_bytes())
-                    .collect();
-                let mut size=(str.len()/2).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_STR);
-                instructions.append(&mut size);
-                instructions.append(&mut str);
             }
             op_code_name::PUSH_TRUE=>{
                 instructions.push(op_code::PUSH_TRUE)
