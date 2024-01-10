@@ -128,8 +128,56 @@ impl Assembler{
             op_code_name::POP=>{
                 instructions.push(op_code::POP)
             }
+            op_code_name::POP_TO_RBP=>{
+                instructions.push(op_code::POP_TO_RBP);
+            }
+            op_code_name::POP_TO_RSP=>{
+                instructions.push(op_code::POP_TO_RSP);
+            }
+            op_code_name::POP_TO_RAX=>{
+                instructions.push(op_code::POP_TO_RAX);
+            }
+            op_code_name::POP_TO_RBX=>{
+                instructions.push(op_code::POP_TO_RBX);
+            }
+            op_code_name::POP_TO_RCX=>{
+                instructions.push(op_code::POP_TO_RCX);
+            }
+            op_code_name::POP_TO_RDX=>{
+                instructions.push(op_code::POP_TO_RDX);
+            }
+            op_code_name::POP_TO_RDI=>{
+                instructions.push(op_code::POP_TO_RDI);
+            }
+            op_code_name::POP_TO_RSI=>{
+                instructions.push(op_code::POP_TO_RSI);
+            }
             op_code_name::DUP=>{
                 instructions.push(op_code::DUP)
+            }
+            op_code_name::DUP_RBP=>{
+                instructions.push(op_code::DUP_RBP);
+            }
+            op_code_name::DUP_RSP=>{
+                instructions.push(op_code::DUP_RSP);
+            }
+            op_code_name::DUP_RAX=>{
+                instructions.push(op_code::DUP_RAX);
+            }
+            op_code_name::DUP_RBX=>{
+                instructions.push(op_code::DUP_RBX);
+            }
+            op_code_name::DUP_RCX=>{
+                instructions.push(op_code::DUP_RCX);
+            }
+            op_code_name::DUP_RDX=>{
+                instructions.push(op_code::DUP_RDX);
+            }
+            op_code_name::DUP_RDI=>{
+                instructions.push(op_code::DUP_RDI);
+            }
+            op_code_name::DUP_RSI=>{
+                instructions.push(op_code::DUP_RSI);
             }
             op_code_name::ADD_I32=>{
                 instructions.push(op_code::ADD_I32)
