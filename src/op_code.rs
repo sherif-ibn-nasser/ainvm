@@ -18,9 +18,34 @@ pub mod op_code_name{
     pub const PUSH_TRUE:&str="أدرج_صواب";
     pub const PUSH_FALSE:&str="أدرج_خطأ";
 
+    pub const PUSH_TO_RBP:&str="أدرج_إلى_س";
+    pub const PUSH_TO_RSP:&str="أدرج_إلى_ف";
+    pub const PUSH_TO_RAX:&str="أدرج_إلى_أ";
+    pub const PUSH_TO_RBX:&str="أدرج_إلى_ب";
+    pub const PUSH_TO_RCX:&str="أدرج_إلى_ج";
+    pub const PUSH_TO_RDX:&str="أدرج_إلى_د";
+    pub const PUSH_TO_RDI:&str="أدرج_إلى_م";
+    pub const PUSH_TO_RSI:&str="أدرج_إلى_ن";
+
     pub const POP:&str="استخرج";
+    pub const POP_TO_RBP:&str="استخرج_إلى_س";
+    pub const POP_TO_RSP:&str="استخرج_إلى_ف";
+    pub const POP_TO_RAX:&str="استخرج_إلى_أ";
+    pub const POP_TO_RBX:&str="استخرج_إلى_ب";
+    pub const POP_TO_RCX:&str="استخرج_إلى_ج";
+    pub const POP_TO_RDX:&str="استخرج_إلى_د";
+    pub const POP_TO_RDI:&str="استخرج_إلى_م";
+    pub const POP_TO_RSI:&str="استخرج_إلى_ن";
 
     pub const DUP:&str="انسخ";
+    pub const DUP_RBP:&str="انسخ_س";
+    pub const DUP_RSP:&str="انسخ_ف";
+    pub const DUP_RAX:&str="انسخ_أ";
+    pub const DUP_RBX:&str="انسخ_ب";
+    pub const DUP_RCX:&str="انسخ_ج";
+    pub const DUP_RDX:&str="انسخ_د";
+    pub const DUP_RDI:&str="انسخ_م";
+    pub const DUP_RSI:&str="انسخ_ن";
 
     pub const ADD_I32:&str="اجمع_ص32";
     pub const ADD_U32:&str="اجمع_م32";
@@ -146,8 +171,32 @@ pub mod op_code{
                 , PUSH_STR
                 , PUSH_TRUE
                 , PUSH_FALSE
+                , PUSH_TO_RBP
+                , PUSH_TO_RSP
+                , PUSH_TO_RAX
+                , PUSH_TO_RBX
+                , PUSH_TO_RCX
+                , PUSH_TO_RDX
+                , PUSH_TO_RDI
+                , PUSH_TO_RSI
                 , POP
+                , POP_TO_RBP
+                , POP_TO_RSP
+                , POP_TO_RAX
+                , POP_TO_RBX
+                , POP_TO_RCX
+                , POP_TO_RDX
+                , POP_TO_RDI
+                , POP_TO_RSI
                 , DUP
+                , DUP_RBP
+                , DUP_RSP
+                , DUP_RAX
+                , DUP_RBX
+                , DUP_RCX
+                , DUP_RDX
+                , DUP_RDI
+                , DUP_RSI
                 , ADD_I32
                 , ADD_U32
                 , ADD_F32
@@ -235,7 +284,7 @@ pub mod op_code{
                 , F64_TO_U32
                 , F64_TO_F32
                 , F64_TO_I64
-                , F64_TO_U64       
+                , F64_TO_U64
     }
 
 }

@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 pub mod assembler;
 pub mod op_code;
 
