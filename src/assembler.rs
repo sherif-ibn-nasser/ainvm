@@ -89,6 +89,7 @@ impl Assembler{
                 instructions.append(&mut uint);
             }
             op_code_name::PUSH_F64=>{
+                // This doesn't care about the floating point, so you may store a value bigger than u64 here.
                 let mut float=self.get_next_num_lit::<f64>(f64::MIN,f64::MAX).to_be_bytes().to_vec();
                 instructions.push(op_code::PUSH_F64);
                 instructions.append(&mut float);
@@ -118,6 +119,47 @@ impl Assembler{
                         )
                         .collect();
                  */
+            }
+            // Registers don't care about the floating point, so you may store a value bigger than u64 inside them.
+            op_code_name::PUSH_TO_RBP=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RBP);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RSP=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RSP);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RAX=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RAX);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RBX=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RBX);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RCX=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RCX);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RDX=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RDX);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RDI=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RDI);
+                instructions.append(&mut reg_val);
+            }
+            op_code_name::PUSH_TO_RSI=>{
+                let mut reg_val=self.get_next_reg_num_lit();
+                instructions.push(op_code::PUSH_TO_RSI);
+                instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TRUE=>{
                 instructions.push(op_code::PUSH_TRUE)
@@ -449,6 +491,47 @@ impl Assembler{
         }
     
         return instructions;
+    }
+
+    fn get_next_reg_num_lit<>(&mut self)->Vec<u8>{
+        
+        let mut num_lit=String::from("");
+
+        while self.i<self.content.len(){
+            let c=self.current_char();
+            self.next();
+
+            if !c.is_ascii_whitespace(){
+                num_lit+=&c.to_string();
+                continue
+            }
+            else if num_lit.is_empty(){
+                panic!("يُتوقع عدد.")
+            }
+            break
+
+        }
+
+        let num_i64=num_lit.parse::<i64>();
+
+        match num_i64 {
+            Ok(val) => return val.to_be_bytes().to_vec(),
+            _ =>{}
+        }
+        let num_u64=num_lit.parse::<u64>();
+
+        match num_u64 {
+            Ok(val) => return val.to_be_bytes().to_vec(),
+            _ =>{}
+        }
+        let num_f64=num_lit.parse::<f64>();
+
+        match num_f64 {
+            Ok(val) => return val.to_be_bytes().to_vec(),
+            Err(_) =>
+                panic!("القيمة \'{}\' قد تعدت القيمة المسموح بها في المسجلات ذات 64 بت.",num_lit)
+        }
+
     }
 
     fn get_next_num_lit<NUM:FromStr+PartialOrd+Display>(&mut self,min:NUM,max:NUM)->NUM
