@@ -1,4 +1,4 @@
-use std::{str::FromStr, fmt::{Debug, Display}};
+use std::{str::FromStr, fmt::{Debug, Display}, collections::HashMap};
 
 use crate::op_code::*;
 
@@ -6,6 +6,8 @@ pub struct Assembler{
     content:Vec<char>,
     i:usize,
     current_instruction:String,
+    instructions:Vec<u8>,
+    functions:HashMap<String,usize>, // maps functions to the index of first instruction inside it  
 }
 
 impl Assembler{
@@ -13,12 +15,13 @@ impl Assembler{
         Assembler{
             content:content.chars().collect(),
             i: 0,
-            current_instruction: String::from("")
+            current_instruction: String::from(""),
+            instructions: vec![],
+            functions: HashMap::new(),
         }
     }
 
-    pub fn assemble(&mut self)->Vec<u8>{
-        let mut instructions:Vec<u8>=vec![];
+    pub fn assemble(&mut self)->&mut Vec<u8>{
 
         while self.i<self.content.len() {
 
@@ -38,69 +41,71 @@ impl Assembler{
                 &&
                 !self.current_instruction.is_empty()
             {
-                let mut new_instructions=self.map_current_instruction();
-                instructions.append(&mut new_instructions);
+                self.map_current_instruction();
                 self.current_instruction=String::from("");
             }
 
 
         }
+
+        for f in &self.functions{
+            println!("{}, {}",f.0,f.1);
+        }
         
-        return instructions;
+        return &mut self.instructions;
     }
 
-    fn map_current_instruction(&mut self)->Vec<u8>{
-        let mut instructions:Vec<u8>=vec![];
+    fn map_current_instruction(&mut self){
     
         match self.current_instruction.as_str() {
     
             op_code_name::NOP=>{
-                instructions.push(op_code::NOP)
+                self.instructions.push(op_code::NOP)
             }
             op_code_name::PRINT=>{
-                instructions.push(op_code::PRINT)
+                self.instructions.push(op_code::PRINT)
             }
             op_code_name::PRINTLN=>{
-                instructions.push(op_code::PRINTLN)
+                self.instructions.push(op_code::PRINTLN)
             }
             op_code_name::PUSH_I32=>{
                 let mut int=self.get_next_num_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_I32);
-                instructions.append(&mut int);
+                self.instructions.push(op_code::PUSH_I32);
+                self.instructions.append(&mut int);
             }
             op_code_name::PUSH_U32=>{
                 let mut uint=self.get_next_num_lit::<u32>(u32::MIN,u32::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_U32);
-                instructions.append(&mut uint);
+                self.instructions.push(op_code::PUSH_U32);
+                self.instructions.append(&mut uint);
             }
             op_code_name::PUSH_F32=>{
                 let mut float=self.get_next_num_lit::<f32>(f32::MIN,f32::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_F32);
-                instructions.append(&mut float);
+                self.instructions.push(op_code::PUSH_F32);
+                self.instructions.append(&mut float);
             }
             op_code_name::PUSH_I64=>{
                 let mut int=self.get_next_num_lit::<i64>(i64::MIN,i64::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_I64);
-                instructions.append(&mut int);
+                self.instructions.push(op_code::PUSH_I64);
+                self.instructions.append(&mut int);
             }
             op_code_name::PUSH_U64=>{
                 let mut uint=self.get_next_num_lit::<u64>(u64::MIN,u64::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_U64);
-                instructions.append(&mut uint);
+                self.instructions.push(op_code::PUSH_U64);
+                self.instructions.append(&mut uint);
             }
             op_code_name::PUSH_F64=>{
                 // This doesn't care about the floating point, so you may store a value bigger than u64 here.
                 let mut float=self.get_next_num_lit::<f64>(f64::MIN,f64::MAX).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_F64);
-                instructions.append(&mut float);
+                self.instructions.push(op_code::PUSH_F64);
+                self.instructions.append(&mut float);
             }
             op_code_name::PUSH_CHAR=>{
                 let mut c=self.get_next_char_lit('\'')
                     .encode_utf16()
                     .flat_map(|b16|b16.to_be_bytes())
                     .collect();
-                instructions.push(op_code::PUSH_CHAR);
-                instructions.append(&mut c);
+                self.instructions.push(op_code::PUSH_CHAR);
+                self.instructions.append(&mut c);
             }
             op_code_name::PUSH_STR=>{
                 let mut str:Vec<_>=self.get_next_char_lit('\"')
@@ -108,9 +113,9 @@ impl Assembler{
                     .flat_map(|b16|b16.to_be_bytes())
                     .collect();
                 let mut size=((str.len()/2) as u64).to_be_bytes().to_vec();
-                instructions.push(op_code::PUSH_STR);
-                instructions.append(&mut size);
-                instructions.append(&mut str);
+                self.instructions.push(op_code::PUSH_STR);
+                self.instructions.append(&mut size);
+                self.instructions.append(&mut str);
                 /*
                  * let mut tbb:Vec<u16>=tb.chunks(2)
                         .map(
@@ -123,374 +128,376 @@ impl Assembler{
             // Registers don't care about the floating point, so you may store a value bigger than u64 inside them.
             op_code_name::PUSH_TO_RBP=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RBP);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RBP);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RSP=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RSP);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RSP);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RAX=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RAX);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RAX);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RBX=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RBX);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RBX);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RCX=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RCX);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RCX);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RDX=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RDX);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RDX);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RDI=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RDI);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RDI);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TO_RSI=>{
                 let mut reg_val=self.get_next_reg_num_lit();
-                instructions.push(op_code::PUSH_TO_RSI);
-                instructions.append(&mut reg_val);
+                self.instructions.push(op_code::PUSH_TO_RSI);
+                self.instructions.append(&mut reg_val);
             }
             op_code_name::PUSH_TRUE=>{
-                instructions.push(op_code::PUSH_TRUE)
+                self.instructions.push(op_code::PUSH_TRUE)
             }
             op_code_name::PUSH_FALSE=>{
-                instructions.push(op_code::PUSH_FALSE)
+                self.instructions.push(op_code::PUSH_FALSE)
             }
             op_code_name::POP=>{
-                instructions.push(op_code::POP)
+                self.instructions.push(op_code::POP)
             }
             op_code_name::POP_TO_RBP=>{
-                instructions.push(op_code::POP_TO_RBP);
+                self.instructions.push(op_code::POP_TO_RBP);
             }
             op_code_name::POP_TO_RSP=>{
-                instructions.push(op_code::POP_TO_RSP);
+                self.instructions.push(op_code::POP_TO_RSP);
             }
             op_code_name::POP_TO_RAX=>{
-                instructions.push(op_code::POP_TO_RAX);
+                self.instructions.push(op_code::POP_TO_RAX);
             }
             op_code_name::POP_TO_RBX=>{
-                instructions.push(op_code::POP_TO_RBX);
+                self.instructions.push(op_code::POP_TO_RBX);
             }
             op_code_name::POP_TO_RCX=>{
-                instructions.push(op_code::POP_TO_RCX);
+                self.instructions.push(op_code::POP_TO_RCX);
             }
             op_code_name::POP_TO_RDX=>{
-                instructions.push(op_code::POP_TO_RDX);
+                self.instructions.push(op_code::POP_TO_RDX);
             }
             op_code_name::POP_TO_RDI=>{
-                instructions.push(op_code::POP_TO_RDI);
+                self.instructions.push(op_code::POP_TO_RDI);
             }
             op_code_name::POP_TO_RSI=>{
-                instructions.push(op_code::POP_TO_RSI);
+                self.instructions.push(op_code::POP_TO_RSI);
             }
             op_code_name::DUP=>{
-                instructions.push(op_code::DUP)
+                self.instructions.push(op_code::DUP)
             }
             op_code_name::DUP_RBP=>{
-                instructions.push(op_code::DUP_RBP);
+                self.instructions.push(op_code::DUP_RBP);
             }
             op_code_name::DUP_RSP=>{
-                instructions.push(op_code::DUP_RSP);
+                self.instructions.push(op_code::DUP_RSP);
             }
             op_code_name::DUP_RAX=>{
-                instructions.push(op_code::DUP_RAX);
+                self.instructions.push(op_code::DUP_RAX);
             }
             op_code_name::DUP_RBX=>{
-                instructions.push(op_code::DUP_RBX);
+                self.instructions.push(op_code::DUP_RBX);
             }
             op_code_name::DUP_RCX=>{
-                instructions.push(op_code::DUP_RCX);
+                self.instructions.push(op_code::DUP_RCX);
             }
             op_code_name::DUP_RDX=>{
-                instructions.push(op_code::DUP_RDX);
+                self.instructions.push(op_code::DUP_RDX);
             }
             op_code_name::DUP_RDI=>{
-                instructions.push(op_code::DUP_RDI);
+                self.instructions.push(op_code::DUP_RDI);
             }
             op_code_name::DUP_RSI=>{
-                instructions.push(op_code::DUP_RSI);
+                self.instructions.push(op_code::DUP_RSI);
             }
             op_code_name::ADD_I32=>{
-                instructions.push(op_code::ADD_I32)
+                self.instructions.push(op_code::ADD_I32)
             }
             op_code_name::ADD_U32=>{
-                instructions.push(op_code::ADD_U32)
+                self.instructions.push(op_code::ADD_U32)
             }
             op_code_name::ADD_F32=>{
-                instructions.push(op_code::ADD_F32)
+                self.instructions.push(op_code::ADD_F32)
             }
             op_code_name::ADD_I64=>{
-                instructions.push(op_code::ADD_I64)
+                self.instructions.push(op_code::ADD_I64)
             }
             op_code_name::ADD_U64=>{
-                instructions.push(op_code::ADD_U64)
+                self.instructions.push(op_code::ADD_U64)
             }
             op_code_name::ADD_F64=>{
-                instructions.push(op_code::ADD_F64)
+                self.instructions.push(op_code::ADD_F64)
             }
             op_code_name::SUB_I32=>{
-                instructions.push(op_code::SUB_I32)
+                self.instructions.push(op_code::SUB_I32)
             }
             op_code_name::SUB_U32=>{
-                instructions.push(op_code::SUB_U32)
+                self.instructions.push(op_code::SUB_U32)
             }
             op_code_name::SUB_F32=>{
-                instructions.push(op_code::SUB_F32)
+                self.instructions.push(op_code::SUB_F32)
             }
             op_code_name::SUB_I64=>{
-                instructions.push(op_code::SUB_I64)
+                self.instructions.push(op_code::SUB_I64)
             }
             op_code_name::SUB_U64=>{
-                instructions.push(op_code::SUB_U64)
+                self.instructions.push(op_code::SUB_U64)
             }
             op_code_name::SUB_F64=>{
-                instructions.push(op_code::SUB_F64)
+                self.instructions.push(op_code::SUB_F64)
             }
             op_code_name::MUL_I32=>{
-                instructions.push(op_code::MUL_I32)
+                self.instructions.push(op_code::MUL_I32)
             }
             op_code_name::MUL_U32=>{
-                instructions.push(op_code::MUL_U32)
+                self.instructions.push(op_code::MUL_U32)
             }
             op_code_name::MUL_F32=>{
-                instructions.push(op_code::MUL_F32)
+                self.instructions.push(op_code::MUL_F32)
             }
             op_code_name::MUL_I64=>{
-                instructions.push(op_code::MUL_I64)
+                self.instructions.push(op_code::MUL_I64)
             }
             op_code_name::MUL_U64=>{
-                instructions.push(op_code::MUL_U64)
+                self.instructions.push(op_code::MUL_U64)
             }
             op_code_name::MUL_F64=>{
-                instructions.push(op_code::MUL_F64)
+                self.instructions.push(op_code::MUL_F64)
             }
             op_code_name::DIV_I32=>{
-                instructions.push(op_code::DIV_I32)
+                self.instructions.push(op_code::DIV_I32)
             }
             op_code_name::DIV_U32=>{
-                instructions.push(op_code::DIV_U32)
+                self.instructions.push(op_code::DIV_U32)
             }
             op_code_name::DIV_F32=>{
-                instructions.push(op_code::DIV_F32)
+                self.instructions.push(op_code::DIV_F32)
             }
             op_code_name::DIV_I64=>{
-                instructions.push(op_code::DIV_I64)
+                self.instructions.push(op_code::DIV_I64)
             }
             op_code_name::DIV_U64=>{
-                instructions.push(op_code::DIV_U64)
+                self.instructions.push(op_code::DIV_U64)
             }
             op_code_name::DIV_F64=>{
-                instructions.push(op_code::DIV_F64)
+                self.instructions.push(op_code::DIV_F64)
             }
             op_code_name::REM_I32=>{
-                instructions.push(op_code::REM_I32)
+                self.instructions.push(op_code::REM_I32)
             }
             op_code_name::REM_U32=>{
-                instructions.push(op_code::REM_U32)
+                self.instructions.push(op_code::REM_U32)
             }
             op_code_name::REM_F32=>{
-                instructions.push(op_code::REM_F32)
+                self.instructions.push(op_code::REM_F32)
             }
             op_code_name::REM_I64=>{
-                instructions.push(op_code::REM_I64)
+                self.instructions.push(op_code::REM_I64)
             }
             op_code_name::REM_U64=>{
-                instructions.push(op_code::REM_U64)
+                self.instructions.push(op_code::REM_U64)
             }
             op_code_name::REM_F64=>{
-                instructions.push(op_code::REM_F64)
+                self.instructions.push(op_code::REM_F64)
             }
             op_code_name::SHR_I32=>{
-                instructions.push(op_code::SHR_I32)
+                self.instructions.push(op_code::SHR_I32)
             }
             op_code_name::SHR_U32=>{
-                instructions.push(op_code::SHR_U32)
+                self.instructions.push(op_code::SHR_U32)
             }
             op_code_name::SHR_I64=>{
-                instructions.push(op_code::SHR_I64)
+                self.instructions.push(op_code::SHR_I64)
             }
             op_code_name::SHR_U64=>{
-                instructions.push(op_code::SHR_U64)
+                self.instructions.push(op_code::SHR_U64)
             }
             op_code_name::SHL_I32=>{
-                instructions.push(op_code::SHL_I32)
+                self.instructions.push(op_code::SHL_I32)
             }
             op_code_name::SHL_U32=>{
-                instructions.push(op_code::SHL_U32)
+                self.instructions.push(op_code::SHL_U32)
             }
             op_code_name::SHL_I64=>{
-                instructions.push(op_code::SHL_I64)
+                self.instructions.push(op_code::SHL_I64)
             }
             op_code_name::SHL_U64=>{
-                instructions.push(op_code::SHL_U64)
+                self.instructions.push(op_code::SHL_U64)
             }
             op_code_name::XOR_I32=>{
-                instructions.push(op_code::XOR_I32)
+                self.instructions.push(op_code::XOR_I32)
             }
             op_code_name::XOR_U32=>{
-                instructions.push(op_code::XOR_U32)
+                self.instructions.push(op_code::XOR_U32)
             }
             op_code_name::XOR_I64=>{
-                instructions.push(op_code::XOR_I64)
+                self.instructions.push(op_code::XOR_I64)
             }
             op_code_name::XOR_U64=>{
-                instructions.push(op_code::XOR_U64)
+                self.instructions.push(op_code::XOR_U64)
             }
             op_code_name::AND_I32=>{
-                instructions.push(op_code::AND_I32)
+                self.instructions.push(op_code::AND_I32)
             }
             op_code_name::AND_U32=>{
-                instructions.push(op_code::AND_U32)
+                self.instructions.push(op_code::AND_U32)
             }
             op_code_name::AND_I64=>{
-                instructions.push(op_code::AND_I64)
+                self.instructions.push(op_code::AND_I64)
             }
             op_code_name::AND_U64=>{
-                instructions.push(op_code::AND_U64)
+                self.instructions.push(op_code::AND_U64)
             }
             op_code_name::OR_I32=>{
-                instructions.push(op_code::OR_I32)
+                self.instructions.push(op_code::OR_I32)
             }
             op_code_name::OR_U32=>{
-                instructions.push(op_code::OR_U32)
+                self.instructions.push(op_code::OR_U32)
             }
             op_code_name::OR_I64=>{
-                instructions.push(op_code::OR_I64)
+                self.instructions.push(op_code::OR_I64)
             }
             op_code_name::OR_U64=>{
-                instructions.push(op_code::OR_U64)
+                self.instructions.push(op_code::OR_U64)
             }
             op_code_name::NOT_I32=>{
-                instructions.push(op_code::NOT_I32)
+                self.instructions.push(op_code::NOT_I32)
             }
             op_code_name::NOT_U32=>{
-                instructions.push(op_code::NOT_U32)
+                self.instructions.push(op_code::NOT_U32)
             }
             op_code_name::NOT_I64=>{
-                instructions.push(op_code::NOT_I64)
+                self.instructions.push(op_code::NOT_I64)
             }
             op_code_name::NOT_U64=>{
-                instructions.push(op_code::NOT_U64)
+                self.instructions.push(op_code::NOT_U64)
             }
             op_code_name::NEG_I32=>{
-                instructions.push(op_code::NEG_I32)
+                self.instructions.push(op_code::NEG_I32)
             }
             op_code_name::NEG_F32=>{
-                instructions.push(op_code::NEG_F32)
+                self.instructions.push(op_code::NEG_F32)
             }
             op_code_name::NEG_I64=>{
-                instructions.push(op_code::NEG_I64)
+                self.instructions.push(op_code::NEG_I64)
             }
             op_code_name::NEG_F64=>{
-                instructions.push(op_code::NEG_F64)
+                self.instructions.push(op_code::NEG_F64)
             }
             op_code_name::I32_TO_U32=>{
-                instructions.push(op_code::I32_TO_U32)
+                self.instructions.push(op_code::I32_TO_U32)
             }
             op_code_name::I32_TO_F32=>{
-                instructions.push(op_code::I32_TO_F32)
+                self.instructions.push(op_code::I32_TO_F32)
             }
             op_code_name::I32_TO_I64=>{
-                instructions.push(op_code::I32_TO_I64)
+                self.instructions.push(op_code::I32_TO_I64)
             }
             op_code_name::I32_TO_U64=>{
-                instructions.push(op_code::I32_TO_U64)
+                self.instructions.push(op_code::I32_TO_U64)
             }
             op_code_name::I32_TO_F64=>{
-                instructions.push(op_code::I32_TO_F64)
+                self.instructions.push(op_code::I32_TO_F64)
             }
             op_code_name::U32_TO_I32=>{
-                instructions.push(op_code::U32_TO_I32)
+                self.instructions.push(op_code::U32_TO_I32)
             }
             op_code_name::U32_TO_F32=>{
-                instructions.push(op_code::U32_TO_F32)
+                self.instructions.push(op_code::U32_TO_F32)
             }
             op_code_name::U32_TO_I64=>{
-                instructions.push(op_code::U32_TO_I64)
+                self.instructions.push(op_code::U32_TO_I64)
             }
             op_code_name::U32_TO_U64=>{
-                instructions.push(op_code::U32_TO_U64)
+                self.instructions.push(op_code::U32_TO_U64)
             }
             op_code_name::U32_TO_F64=>{
-                instructions.push(op_code::U32_TO_F64)
+                self.instructions.push(op_code::U32_TO_F64)
             }
             op_code_name::F32_TO_I32=>{
-                instructions.push(op_code::F32_TO_I32)
+                self.instructions.push(op_code::F32_TO_I32)
             }
             op_code_name::F32_TO_U32=>{
-                instructions.push(op_code::F32_TO_U32)
+                self.instructions.push(op_code::F32_TO_U32)
             }
             op_code_name::F32_TO_I64=>{
-                instructions.push(op_code::F32_TO_I64)
+                self.instructions.push(op_code::F32_TO_I64)
             }
             op_code_name::F32_TO_U64=>{
-                instructions.push(op_code::F32_TO_U64)
+                self.instructions.push(op_code::F32_TO_U64)
             }
             op_code_name::F32_TO_F64=>{
-                instructions.push(op_code::F32_TO_F64)
+                self.instructions.push(op_code::F32_TO_F64)
             }
             op_code_name::I64_TO_I32=>{
-                instructions.push(op_code::I64_TO_I32)
+                self.instructions.push(op_code::I64_TO_I32)
             }
             op_code_name::I64_TO_U32=>{
-                instructions.push(op_code::I64_TO_U32)
+                self.instructions.push(op_code::I64_TO_U32)
             }
             op_code_name::I64_TO_F32=>{
-                instructions.push(op_code::I64_TO_F32)
+                self.instructions.push(op_code::I64_TO_F32)
             }
             op_code_name::I64_TO_U64=>{
-                instructions.push(op_code::I64_TO_U64)
+                self.instructions.push(op_code::I64_TO_U64)
             }
             op_code_name::I64_TO_F64=>{
-                instructions.push(op_code::I64_TO_F64)
+                self.instructions.push(op_code::I64_TO_F64)
             }
             op_code_name::U64_TO_I32=>{
-                instructions.push(op_code::U64_TO_I32)
+                self.instructions.push(op_code::U64_TO_I32)
             }
             op_code_name::U64_TO_U32=>{
-                instructions.push(op_code::U64_TO_U32)
+                self.instructions.push(op_code::U64_TO_U32)
             }
             op_code_name::U64_TO_F32=>{
-                instructions.push(op_code::U64_TO_F32)
+                self.instructions.push(op_code::U64_TO_F32)
             }
             op_code_name::U64_TO_I64=>{
-                instructions.push(op_code::U64_TO_I64)
+                self.instructions.push(op_code::U64_TO_I64)
             }
             op_code_name::U64_TO_F64=>{
-                instructions.push(op_code::U64_TO_F64)
+                self.instructions.push(op_code::U64_TO_F64)
             }
             op_code_name::F64_TO_I32=>{
-                instructions.push(op_code::F64_TO_I32)
+                self.instructions.push(op_code::F64_TO_I32)
             }
             op_code_name::F64_TO_U32=>{
-                instructions.push(op_code::F64_TO_U32)
+                self.instructions.push(op_code::F64_TO_U32)
             }
             op_code_name::F64_TO_F32=>{
-                instructions.push(op_code::F64_TO_F32)
+                self.instructions.push(op_code::F64_TO_F32)
             }
             op_code_name::F64_TO_I64=>{
-                instructions.push(op_code::F64_TO_I64)
+                self.instructions.push(op_code::F64_TO_I64)
             }
             op_code_name::F64_TO_U64=>{
-                instructions.push(op_code::F64_TO_U64)
+                self.instructions.push(op_code::F64_TO_U64)
             }
             _=>{
-                panic!("أمر غير متوقع \"{}\"",self.current_instruction)
+                if !self.current_instruction.ends_with(":") {
+                    panic!("أمر غير متوقع \"{}\"",self.current_instruction)   
+                }
+                self.functions.insert(self.current_instruction.to_string(), self.instructions.len());
             }
         }
     
-        return instructions;
     }
 
     fn get_next_reg_num_lit<>(&mut self)->Vec<u8>{

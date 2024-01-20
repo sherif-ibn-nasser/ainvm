@@ -23,7 +23,8 @@ fn read_instructions_file_from_args()->String{
 
 fn main() {
     let content=read_instructions_file_from_args();
-    let instructions=assembler::Assembler::new(content).assemble();
+    let mut assembler=assembler::Assembler::new(content);
+    let instructions=assembler.assemble();
     println!("{}",instructions.len());
     for i in instructions{
         println!("{}**",i)
