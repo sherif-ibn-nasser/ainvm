@@ -7,6 +7,8 @@ pub mod op_code_name{
     pub const PRINT:&str="اطبع";
     pub const PRINTLN:&str="اطبع_";
 
+    pub const GOTO:&str="استدع";
+
     pub const PUSH_I32:&str="أدرج_ص32";
     pub const PUSH_U32:&str="أدرج_م32";
     pub const PUSH_F32:&str="أدرج_ع32";
@@ -161,6 +163,7 @@ pub mod op_code{
         pub const NOP:u8=iota;
                 , PRINT
                 , PRINTLN
+                , GOTO
                 , PUSH_I32
                 , PUSH_U32
                 , PUSH_F32

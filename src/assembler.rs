@@ -7,7 +7,7 @@ pub struct Assembler{
     i:usize,
     current_instruction:String,
     instructions:Vec<u8>,
-    functions:HashMap<String,usize>, // maps functions to the index of first instruction inside it  
+    functions:HashMap<String,u64>, // maps functions to the index of first instruction inside it  
 }
 
 impl Assembler{
@@ -25,26 +25,12 @@ impl Assembler{
 
         while self.i<self.content.len() {
 
-            let c=self.content[self.i];
-            self.i+=1;
+            self.parse_next_instruction();
 
-            if !c.is_ascii_whitespace(){
-                self.current_instruction+=&c.to_string();
-            }
-
-            if
-                (
-                    c.is_ascii_whitespace()
-                    ||
-                    self.i==self.content.len()
-                )
-                &&
-                !self.current_instruction.is_empty()
+            if !self.current_instruction.is_empty()
             {
                 self.map_current_instruction();
-                self.current_instruction=String::from("");
             }
-
 
         }
 
@@ -67,6 +53,13 @@ impl Assembler{
             }
             op_code_name::PRINTLN=>{
                 self.instructions.push(op_code::PRINTLN)
+            }
+            op_code_name::GOTO=>{
+                self.parse_next_instruction();
+                let func_name=self.current_instruction.to_owned()+":";
+                let mut func_ip=self.functions[&func_name].to_be_bytes().to_vec();
+                self.instructions.push(op_code::GOTO);
+                self.instructions.append(&mut func_ip);
             }
             op_code_name::PUSH_I32=>{
                 let mut int=self.get_next_num_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
@@ -494,10 +487,25 @@ impl Assembler{
                 if !self.current_instruction.ends_with(":") {
                     panic!("أمر غير متوقع \"{}\"",self.current_instruction)   
                 }
-                self.functions.insert(self.current_instruction.to_string(), self.instructions.len());
+                self.functions.insert(self.current_instruction.to_string(), self.instructions.len() as u64);
             }
         }
     
+    }
+
+    fn parse_next_instruction(&mut self){
+        self.current_instruction.clear();
+        while self.i<self.content.len(){
+            let c=self.current_char();
+            self.next();
+            if c.is_ascii_whitespace(){
+                if self.current_instruction.is_empty(){
+                    continue
+                }
+                break
+            }
+            self.current_instruction+=&c.to_string();
+        }
     }
 
     fn get_next_reg_num_lit<>(&mut self)->Vec<u8>{
