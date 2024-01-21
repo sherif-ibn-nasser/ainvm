@@ -7,7 +7,8 @@ pub struct Assembler{
     i:usize,
     current_instruction:String,
     instructions:Vec<u8>,
-    functions:HashMap<String,u64>, // maps functions to the index of first instruction inside it  
+    functions:HashMap<String,u64>, // maps functions to the index of first instruction inside it
+    goto_statements:HashMap<usize,String>,
 }
 
 impl Assembler{
@@ -18,6 +19,7 @@ impl Assembler{
             current_instruction: String::from(""),
             instructions: vec![],
             functions: HashMap::new(),
+            goto_statements: HashMap::new(),
         }
     }
 
@@ -34,6 +36,8 @@ impl Assembler{
 
         }
 
+        self.map_goto_statements();
+
         for f in &self.functions{
             println!("{}, {}",f.0,f.1);
         }
@@ -48,6 +52,9 @@ impl Assembler{
             op_code_name::NOP=>{
                 self.instructions.push(op_code::NOP)
             }
+            op_code_name::HALT=>{
+                self.instructions.push(op_code::HALT)
+            }
             op_code_name::PRINT=>{
                 self.instructions.push(op_code::PRINT)
             }
@@ -56,10 +63,9 @@ impl Assembler{
             }
             op_code_name::GOTO=>{
                 self.parse_next_instruction();
-                let func_name=self.current_instruction.to_owned()+":";
-                let mut func_ip=self.functions[&func_name].to_be_bytes().to_vec();
+                self.goto_statements.insert(self.instructions.len(), self.current_instruction.to_owned()); // push the index of goto instruction to replace its function name operand later
                 self.instructions.push(op_code::GOTO);
-                self.instructions.append(&mut func_ip);
+                self.instructions.append(&mut vec![0;8]); // null 8 bytes will be replaced later with the first ip index of the function
             }
             op_code_name::PUSH_I32=>{
                 let mut int=self.get_next_num_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
@@ -487,7 +493,8 @@ impl Assembler{
                 if !self.current_instruction.ends_with(":") {
                     panic!("أمر غير متوقع \"{}\"",self.current_instruction)   
                 }
-                self.functions.insert(self.current_instruction.to_string(), self.instructions.len() as u64);
+                self.current_instruction.remove(self.current_instruction.len()-1);
+                self.functions.insert(self.current_instruction.to_owned(), self.instructions.len() as u64);
             }
         }
     
@@ -728,6 +735,25 @@ impl Assembler{
         }
 
         return false
+    }
+
+    fn map_goto_statements(&mut self){
+        for (goto_ip,func_name) in &self.goto_statements{
+            let found_func=self.functions.get(func_name);
+            match found_func {
+                Some(func_ip) => {
+                    let func_ip_bytes=func_ip.to_be_bytes();
+                    let mut i=*goto_ip+1;
+                    for byte in func_ip_bytes{
+                        self.instructions[i]=byte;
+                        i+=1;
+                    }
+                },
+                None => {
+                    panic!("لم يتم العثور على دالة {}.",func_name)
+                },
+            }
+        }
     }
 
 }

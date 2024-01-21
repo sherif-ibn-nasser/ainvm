@@ -4,6 +4,8 @@ pub mod op_code_name{
 
     pub const NOP:&str="لا_شيء";
 
+    pub const HALT:&str="توقف";
+
     pub const PRINT:&str="اطبع";
     pub const PRINTLN:&str="اطبع_";
 
@@ -161,6 +163,7 @@ pub mod op_code{
     
     super::iota!{
         pub const NOP:u8=iota;
+                , HALT
                 , PRINT
                 , PRINTLN
                 , GOTO
