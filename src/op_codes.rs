@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use iota::iota;
 
 pub mod op_code_name{

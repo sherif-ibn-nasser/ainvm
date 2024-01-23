@@ -1,8 +1,7 @@
-use std::{str::FromStr, fmt::{Debug, Display}, collections::HashMap};
+use std::{str::FromStr, fmt::{Debug, Display}, collections::HashMap, fs, env};
+use op_codes::*;
 
-use crate::op_code::*;
-
-pub struct Assembler{
+pub struct AinAssembler{
     content:Vec<char>,
     i:usize,
     current_instruction:String,
@@ -11,9 +10,9 @@ pub struct Assembler{
     goto_statements:HashMap<usize,String>,
 }
 
-impl Assembler{
+impl AinAssembler{
     pub fn new(content:String)->Self{
-        Assembler{
+        AinAssembler{
             content:content.chars().collect(),
             i: 0,
             current_instruction: String::from(""),
@@ -616,7 +615,7 @@ impl Assembler{
 
             /*Append if it is not a special character*/
             if current_char!='\\'{
-                Assembler::check_is_kufr_or_unsupported_character(current_char);
+                AinAssembler::check_is_kufr_or_unsupported_character(current_char);
                 char_lit+=&current_char.to_string();
                 continue;
             }
@@ -627,12 +626,12 @@ impl Assembler{
             /*Unicode characters parsing*/
             if ctrl_char=='ي'{
                 let c=self.get_next_unicode_char_from_code_point();
-                Assembler::check_is_kufr_or_unsupported_character(c);
+                AinAssembler::check_is_kufr_or_unsupported_character(c);
                 char_lit+=&c.to_string();
                 continue;
             }
 
-            let es=Assembler::get_escape_sequence_form_char(ctrl_char);
+            let es=AinAssembler::get_escape_sequence_form_char(ctrl_char);
             char_lit+=&es.to_string();
         }
 
@@ -688,7 +687,7 @@ impl Assembler{
     }
 
     fn check_is_kufr_or_unsupported_character(c:char){
-        if Assembler::is_kufr_or_unsupported_character(c){
+        if AinAssembler::is_kufr_or_unsupported_character(c){
             panic!("يحتوي على رمز للكُفار أو رمز غير مدعوم.")
         }
     }
@@ -756,4 +755,29 @@ impl Assembler{
         }
     }
 
+}
+
+fn read_instructions_file_from_args()->String{
+    let args: Vec<String> = env::args().collect();
+
+    if args.len()!=2{
+        println!("يجب تمرير ملف واحد فقط.");
+        std::process::exit(1);
+    }
+
+    let file_path: &String=&args[1];
+
+    return fs::read_to_string(file_path)
+        .expect("لا يمكن قراءة الملف.");
+
+}
+
+fn main() {
+    let content=read_instructions_file_from_args();
+    let mut assembler=AinAssembler::new(content);
+    let instructions=assembler.assemble();
+    println!("{}",instructions.len());
+    for i in instructions{
+        println!("{}**",i)
+    }
 }

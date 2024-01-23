@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 iota = "0.2"
+
+[lib]
+name="op_codes"
+path="src/op_codes.rs"
