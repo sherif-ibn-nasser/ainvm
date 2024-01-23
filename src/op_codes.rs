@@ -11,7 +11,9 @@ pub mod op_code_name{
     pub const PRINT:&str="اطبع";
     pub const PRINTLN:&str="اطبع_";
 
-    pub const GOTO:&str="استدع";
+    pub const CALL:&str="استدع";
+
+    pub const GOTO:&str="انتقل";
 
     pub const PUSH_I32:&str="أدرج_ص32";
     pub const PUSH_U32:&str="أدرج_م32";
@@ -168,6 +170,7 @@ pub mod op_code{
                 , HALT
                 , PRINT
                 , PRINTLN
+                , CALL
                 , GOTO
                 , PUSH_I32
                 , PUSH_U32

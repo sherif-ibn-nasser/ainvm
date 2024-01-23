@@ -6,7 +6,8 @@ pub struct AinAssembler{
     i:usize,
     current_instruction:String,
     instructions:Vec<u8>,
-    functions:HashMap<String,u64>, // maps functions to the index of first instruction inside it
+    labels:HashMap<String,u64>, // maps functions to the index of first instruction inside it
+    call_statements:HashMap<usize,String>,
     goto_statements:HashMap<usize,String>,
 }
 
@@ -17,7 +18,8 @@ impl AinAssembler{
             i: 0,
             current_instruction: String::from(""),
             instructions: vec![],
-            functions: HashMap::new(),
+            labels: HashMap::new(),
+            call_statements: HashMap::new(),
             goto_statements: HashMap::new(),
         }
     }
@@ -35,9 +37,11 @@ impl AinAssembler{
 
         }
 
+        self.map_call_statements();
+        
         self.map_goto_statements();
 
-        for f in &self.functions{
+        for f in &self.labels{
             println!("{}, {}",f.0,f.1);
         }
         
@@ -60,11 +64,17 @@ impl AinAssembler{
             op_code_name::PRINTLN=>{
                 self.instructions.push(op_code::PRINTLN)
             }
+            op_code_name::CALL=>{
+                self.parse_next_instruction();
+                self.call_statements.insert(self.instructions.len(), self.current_instruction.to_owned()); // push the index of call instruction to replace its function name operand later
+                self.instructions.push(op_code::CALL);
+                self.instructions.append(&mut vec![0;8]); // null 8 bytes will be replaced later with the first ip index of the function
+            }
             op_code_name::GOTO=>{
                 self.parse_next_instruction();
-                self.goto_statements.insert(self.instructions.len(), self.current_instruction.to_owned()); // push the index of goto instruction to replace its function name operand later
+                self.call_statements.insert(self.instructions.len(), self.current_instruction.to_owned()); // push the index of goto instruction to replace its label name operand later
                 self.instructions.push(op_code::GOTO);
-                self.instructions.append(&mut vec![0;8]); // null 8 bytes will be replaced later with the first ip index of the function
+                self.instructions.append(&mut vec![0;8]); // null 8 bytes will be replaced later with the first ip index of the label
             }
             op_code_name::PUSH_I32=>{
                 let mut int=self.get_next_num_lit::<i32>(i32::MIN,i32::MAX).to_be_bytes().to_vec();
@@ -493,7 +503,7 @@ impl AinAssembler{
                     panic!("أمر غير متوقع \"{}\"",self.current_instruction)   
                 }
                 self.current_instruction.remove(self.current_instruction.len()-1);
-                self.functions.insert(self.current_instruction.to_owned(), self.instructions.len() as u64);
+                self.labels.insert(self.current_instruction.to_owned(), self.instructions.len() as u64);
             }
         }
     
@@ -736,9 +746,9 @@ impl AinAssembler{
         return false
     }
 
-    fn map_goto_statements(&mut self){
-        for (goto_ip,func_name) in &self.goto_statements{
-            let found_func=self.functions.get(func_name);
+    fn map_call_statements(&mut self){
+        for (goto_ip,func_name) in &self.call_statements{
+            let found_func=self.labels.get(func_name);
             match found_func {
                 Some(func_ip) => {
                     let func_ip_bytes=func_ip.to_be_bytes();
@@ -750,6 +760,25 @@ impl AinAssembler{
                 },
                 None => {
                     panic!("لم يتم العثور على دالة {}.",func_name)
+                },
+            }
+        }
+    }
+
+    fn map_goto_statements(&mut self){
+        for (goto_ip,label_name) in &self.goto_statements{
+            let found_label=self.labels.get(label_name);
+            match found_label {
+                Some(label_ip) => {
+                    let label_ip_bytes=label_ip.to_be_bytes();
+                    let mut i=*goto_ip+1;
+                    for byte in label_ip_bytes{
+                        self.instructions[i]=byte;
+                        i+=1;
+                    }
+                },
+                None => {
+                    panic!("لم يتم العثور على العنواندالةدالة {}.",label_name)
                 },
             }
         }
