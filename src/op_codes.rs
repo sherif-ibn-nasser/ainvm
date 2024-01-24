@@ -14,6 +14,8 @@ pub mod op_code_name{
     pub const CALL:&str="استدع";
 
     pub const GOTO:&str="انتقل";
+    pub const GOTO_IF_0:&str="انتقل0";
+    pub const GOTO_IF_NOT_0:&str="انتقل!0";
 
     pub const PUSH_I32:&str="أدرج_ص32";
     pub const PUSH_U32:&str="أدرج_م32";
@@ -172,6 +174,8 @@ pub mod op_code{
                 , PRINTLN
                 , CALL
                 , GOTO
+                , GOTO_IF_0
+                , GOTO_IF_NOT_0
                 , PUSH_I32
                 , PUSH_U32
                 , PUSH_F32
